@@ -1,0 +1,21 @@
+{
+  "name": "self-deprecating-bear-pet",
+  "version": "1.0.0",
+  "description": "自嘲熊桌宠 - 学习陪伴 & 摸鱼预警",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "keywords": [
+    "desktop-pet",
+    "electron",
+    "self-deprecating-bear"
+  ],
+  "author": "Wang Haoran",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "sharp": "^0.34.5"
+  }
+}

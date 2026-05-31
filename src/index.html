@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>自嘲熊桌宠</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: transparent;
+      overflow: hidden;
+      font-family: 'Microsoft YaHei', sans-serif;
+    }
+
+    .pet-container {
+      position: relative;
+      width: 200px;
+      height: 280px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .pet-container.study-mode {
+      width: 150px;
+      height: 210px;
+    }
+
+    .bear-image {
+      width: 180px;
+      height: 180px;
+      margin: 10px auto;
+      display: block;
+      transition: transform 0.3s ease;
+      image-rendering: auto;
+    }
+
+    .bear-image:hover {
+      transform: scale(1.05);
+    }
+
+    .study-mode .bear-image {
+      width: 130px;
+      height: 130px;
+    }
+
+    .bear-image.angry {
+      animation: shake 0.5s infinite;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px) rotate(-5deg); }
+      75% { transform: translateX(5px) rotate(5deg); }
+    }
+
+    /* 右键菜单 */
+    .context-menu {
+      position: fixed;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+      min-width: 180px;
+      padding: 8px 0;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.9);
+      transition: all 0.2s ease;
+    }
+
+    .context-menu.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    .context-menu-item {
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+
+    .context-menu-item:hover {
+      background: #f5f5f5;
+    }
+
+    .context-menu-item.active {
+      color: #e91e63;
+      font-weight: bold;
+    }
+
+    .context-menu-item .icon {
+      font-size: 16px;
+    }
+
+    .context-menu-divider {
+      height: 1px;
+      background: #eee;
+      margin: 4px 0;
+    }
+
+    /* 对话气泡 */
+    .speech-bubble {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #FFB5C2 0%, #FFD1DC 50%, #FFE4E1 100%);
+      border-radius: 20px;
+      padding: 12px 18px;
+      min-width: 160px;
+      max-width: 260px;
+      box-shadow: 0 6px 20px rgba(255, 182, 193, 0.4);
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      z-index: 10;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .speech-bubble.show {
+      opacity: 1;
+      top: -25px;
+    }
+
+    .speech-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-top: 12px solid #FFD1DC;
+    }
+
+    .speech-bubble p {
+      font-size: 13px;
+      color: #5D4E6D;
+      text-align: center;
+      line-height: 1.6;
+      font-weight: 500;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    }
+
+    /* 学习计时器 */
+    .study-timer {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(76, 175, 80, 0.9);
+      color: white;
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 12px;
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .study-timer.show {
+      opacity: 1;
+    }
+
+    /* 摸鱼警告 */
+    .warning-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(244, 67, 54, 0.3);
+      border-radius: 10px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .warning-overlay.show {
+      opacity: 1;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+
+    /* 提醒弹窗 */
+    .reminder-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      width: 300px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .reminder-popup.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .reminder-popup h3 {
+      text-align: center;
+      color: #e91e63;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+
+    .reminder-popup p {
+      text-align: center;
+      color: #333;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .reminder-popup .btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .reminder-popup .btn-primary {
+      background: #e91e63;
+      color: white;
+    }
+
+    .reminder-popup .btn-primary:hover {
+      background: #c2185b;
+    }
+  </style>
+</head>
+<body>
+  <div class="pet-container" id="petContainer">
+    <!-- 对话气泡 -->
+    <div class="speech-bubble" id="speechBubble">
+      <p id="speechText"></p>
+    </div>
+
+    <!-- 小熊图片 -->
+    <img class="bear-image" id="bearImage" src="../assets/gifs/自嘲熊.gif" alt="自嘲熊">
+
+    <!-- 学习计时器 -->
+    <div class="study-timer" id="studyTimer">
+      <span id="timerText">学习中...</span>
+    </div>
+
+    <!-- 摸鱼警告遮罩 -->
+    <div class="warning-overlay" id="warningOverlay"></div>
+  </div>
+
+  <!-- 右键菜单 -->
+  <div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" id="menuStudy" onclick="toggleStudy()">
+      <span class="icon">📚</span>
+      <span id="menuStudyText">熊认真学习形态</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="changeBear()">
+      <span class="icon">🔄</span>
+      <span>换一只熊</span>
+    </div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" onclick="hidePet()">
+      <span class="icon">👻</span>
+      <span>隐身熊</span>
+    </div>
+  </div>
+
+  <!-- 提醒弹窗 -->
+  <div class="reminder-popup" id="reminderPopup">
+    <h3 id="reminderTitle">提醒</h3>
+    <p id="reminderText"></p>
+    <button class="btn btn-primary" id="reminderBtn">知道啦！</button>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // GIF 文件路径配置
+    const GIF_PATHS = {
+      normal: [
+        '../assets/gifs/自嘲熊.gif',
+        '../assets/gifs/自嘲熊2.gif',
+        '../assets/gifs/自嘲熊3.gif',
+        '../assets/gifs/自嘲熊4.gif',
+        '../assets/gifs/自嘲熊5.gif',
+        '../assets/gifs/自嘲熊6.gif',
+        '../assets/gifs/自嘲熊7.gif',
+        '../assets/gifs/自嘲熊8.gif'
+      ],
+      rest: [
+        '../assets/gifs/自嘲熊休息.gif',
+        '../assets/gifs/自嘲熊休息2.gif',
+        '../assets/gifs/自嘲熊休息3.gif'
+      ],
+      warning: [
+        '../assets/gifs/自嘲熊摸鱼预警.gif',
+        '../assets/gifs/自嘲熊摸鱼预警2.gif',
+        '../assets/gifs/自嘲熊摸鱼预警3.gif',
+        '../assets/gifs/自嘲熊表情包 (76)_爱给网_aigei_com.gif'
+      ]
+    };
+
+    // DOM元素
+    const bearImage = document.getElementById('bearImage');
+    const speechBubble = document.getElementById('speechBubble');
+    const speechText = document.getElementById('speechText');
+    const studyTimer = document.getElementById('studyTimer');
+    const timerText = document.getElementById('timerText');
+    const warningOverlay = document.getElementById('warningOverlay');
+    const reminderPopup = document.getElementById('reminderPopup');
+    const reminderTitle = document.getElementById('reminderTitle');
+    const reminderText = document.getElementById('reminderText');
+    const reminderBtn = document.getElementById('reminderBtn');
+    const contextMenu = document.getElementById('contextMenu');
+    const menuStudyText = document.getElementById('menuStudyText');
+
+    // 状态管理
+    let currentState = 'normal';
+    let gifRotationInterval = null;
+    let isStudying = false;
+    let studyStartTime = null;
+    let timerInterval = null;
+
+    // 拖动状态
+    let isDragging = false;
+    let wasDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let mouseDownX = 0;
+    let mouseDownY = 0;
+
+    // GIF 轮换间隔配置（毫秒）
+    const ROTATION_INTERVALS = {
+      normal: 5 * 60 * 1000,  // 正常状态：5分钟
+      rest: 2 * 60 * 1000,    // 休息状态：2分钟
+      warning: 30 * 1000      // 预警状态：30秒
+    };
+
+    // 随机语录
+    const randomMessages = [
+      "蒸蚌！",
+      "今天学习效率超高！",
+      "这门课肯定不挂科！",
+      "早八不迟到，全勤奖到手~",
+      "摸鱼不被抓，学习不落下！",
+      "期末绩点UP UP!",
+      "平淡的日子也是完美的日子",
+      "世界不会崩塌，逃跑只是计划"
+    ];
+
+
+    // 切换 GIF 状态
+    function switchGifState(state) {
+      if (gifRotationInterval) {
+        clearInterval(gifRotationInterval);
+        gifRotationInterval = null;
+      }
+
+      currentState = state;
+
+      const gifs = GIF_PATHS[state];
+      // 随机选择初始GIF
+      const randomIndex = Math.floor(Math.random() * gifs.length);
+      bearImage.src = gifs[randomIndex];
+
+      if (gifs.length > 1) {
+        const interval = ROTATION_INTERVALS[state] || 5 * 60 * 1000;
+        gifRotationInterval = setInterval(() => {
+          // 随机选择下一个GIF
+          const newIndex = Math.floor(Math.random() * gifs.length);
+          bearImage.src = gifs[newIndex];
+        }, interval);
+      }
+
+      if (state === 'warning') {
+        bearImage.classList.add('angry');
+        warningOverlay.classList.add('show');
+      } else {
+        bearImage.classList.remove('angry');
+        warningOverlay.classList.remove('show');
+      }
+    }
+
+    // 显示对话气泡
+    function showSpeechBubble(text, duration = 2000) {
+      speechText.textContent = text;
+      speechBubble.classList.add('show');
+      setTimeout(() => {
+        speechBubble.classList.remove('show');
+      }, duration);
+    }
+
+    // 换一只熊
+    function changeBear() {
+      hideContextMenu();
+      const gifs = GIF_PATHS[currentState];
+      const randomIndex = Math.floor(Math.random() * gifs.length);
+      bearImage.src = gifs[randomIndex];
+      showSpeechBubble('换一只熊~ (◕‿◕)', 2000);
+    }
+
+    // 显示提醒弹窗
+    function showReminder(title, text) {
+      reminderTitle.textContent = title;
+      reminderText.textContent = text;
+      reminderPopup.classList.add('show');
+    }
+
+    // 隐藏小熊
+    function hidePet() {
+      hideContextMenu();
+      const { ipcRenderer } = require('electron');
+      ipcRenderer.send('hide-pet');
+    }
+
+    // 更新学习计时器显示
+    function updateTimer() {
+      if (!studyStartTime) return;
+      const elapsed = Date.now() - studyStartTime;
+      const minutes = Math.floor(elapsed / 60000);
+      const seconds = Math.floor((elapsed % 60000) / 1000);
+      timerText.textContent = `学习中 ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // 切换学习状态
+    function toggleStudy() {
+      hideContextMenu();
+      if (isStudying) {
+        ipcRenderer.send('stop-study');
+      } else {
+        ipcRenderer.send('start-study');
+      }
+    }
+
+    // 显示右键菜单
+    function showContextMenu(x, y) {
+      // 更新菜单项状态
+      menuStudyText.textContent = isStudying ? '熊不学了' : '熊认真学习形态';
+
+      // 调整位置确保不超出屏幕
+      const menuWidth = 180;
+      const menuHeight = 200;
+      if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth;
+      if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight;
+
+      contextMenu.style.left = x + 'px';
+      contextMenu.style.top = y + 'px';
+      contextMenu.classList.add('show');
+    }
+
+    // 隐藏右键菜单
+    function hideContextMenu() {
+      contextMenu.classList.remove('show');
+    }
+
+    // 右键事件
+    document.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      showContextMenu(e.clientX, e.clientY);
+    });
+
+    // 点击其他地方关闭菜单
+    document.addEventListener('click', (e) => {
+      if (!contextMenu.contains(e.target)) {
+        hideContextMenu();
+      }
+    });
+
+    // 点击小熊
+    bearImage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideContextMenu();
+
+      // 如果刚刚完成拖动，不触发点击
+      if (wasDragging) {
+        wasDragging = false;
+        return;
+      }
+
+      const msg = randomMessages[Math.floor(Math.random() * randomMessages.length)];
+      showSpeechBubble(msg, 3000);
+    });
+
+    // 关闭提醒弹窗
+    reminderBtn.addEventListener('click', () => {
+      reminderPopup.classList.remove('show');
+      if (currentState === 'rest') {
+        switchGifState('normal');
+      }
+    });
+
+    // 窗口拖动功能
+    document.addEventListener('mousedown', (e) => {
+      // 只在左键点击时开始拖动
+      if (e.button !== 0) return;
+
+      // 检查点击的是否是交互元素（排除这些元素，其他区域都可以拖动）
+      const target = e.target;
+      if (target.classList.contains('context-menu-item') ||
+          target.classList.contains('close-btn') ||
+          target.classList.contains('btn') ||
+          target.closest('.context-menu') ||
+          target.closest('.reminder-popup')) {
+        return;
+      }
+
+      mouseDownX = e.screenX;
+      mouseDownY = e.screenY;
+      isDragging = true;
+      dragStartX = e.screenX;
+      dragStartY = e.screenY;
+
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+
+      const deltaX = e.screenX - dragStartX;
+      const deltaY = e.screenY - dragStartY;
+
+      // 更新起始位置，实现连续拖动
+      dragStartX = e.screenX;
+      dragStartY = e.screenY;
+
+      ipcRenderer.send('move-window', { deltaX, deltaY });
+    });
+
+    document.addEventListener('mouseup', (e) => {
+      if (isDragging) {
+        // 检查是否有显著移动（超过5像素才算拖动）
+        const moveX = Math.abs(e.screenX - mouseDownX);
+        const moveY = Math.abs(e.screenY - mouseDownY);
+        if (moveX > 5 || moveY > 5) {
+          wasDragging = true;
+        }
+      }
+      isDragging = false;
+    });
+
+    // IPC 事件监听
+    ipcRenderer.on('study-started', () => {
+      isStudying = true;
+      studyStartTime = Date.now();
+      studyTimer.classList.add('show');
+      petContainer.classList.add('study-mode');
+      showSpeechBubble('开始学习啦！加油！(๑•̀ㅂ•́)و✧');
+      switchGifState('normal');
+      timerInterval = setInterval(updateTimer, 1000);
+    });
+
+    ipcRenderer.on('study-stopped', () => {
+      isStudying = false;
+      studyStartTime = null;
+      studyTimer.classList.remove('show');
+      petContainer.classList.remove('study-mode');
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      showSpeechBubble('学习结束，辛苦啦！(ﾉ◕ヮ◕)ﾉ');
+      switchGifState('normal');
+    });
+
+    ipcRenderer.on('study-reminder', (event, data) => {
+      showReminder('休息提醒', data.message);
+      isStudying = false;
+      studyTimer.classList.remove('show');
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      switchGifState('rest');
+    });
+
+    ipcRenderer.on('bilibili-detected', (event, data) => {
+      switchGifState('warning');
+      showSpeechBubble(data.message, 5000);
+    });
+
+    ipcRenderer.on('bilibili-left', (event, data) => {
+      switchGifState('normal');
+      showSpeechBubble(data.message);
+    });
+
+    // 初始化
+    switchGifState('normal');
+    setTimeout(() => {
+      showSpeechBubble('你好呀！我是自嘲熊~ (◕‿◕)', 3000);
+    }, 1000);
+  </script>
+</body>
+</html>
